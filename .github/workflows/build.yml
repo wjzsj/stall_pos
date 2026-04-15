@@ -34,29 +34,11 @@ jobs:
       - name: Build debug APK
         run: |
           flutter build apk --debug
-        timeout-minutes: 30
+          find . -name "*.apk" -type f
 
-      - name: Upload to Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          APK="build/app/outputs/flutter-apk/app-debug.apk"
-          if [ ! -f "$APK" ]; then
-            echo "ERROR: APK not found at $APK"
-            ls -la build/app/outputs/flutter-apk/ 2>/dev/null || echo "dir missing"
-            exit 1
-          fi
-          TAG="v$(date +%s)"
-          RELEASE_RESPONSE=$(curl -s -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"tag_name\":\"$TAG\",\"name\":\"Debug APK $TAG\",\"draft\":true}" \
-            "https://api.github.com/repos/$GITHUB_REPOSITORY/releases")
-          UPLOAD_URL=$(echo "$RELEASE_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('upload_url','').replace('{?name,label}',''))")
-          echo "Created release: $TAG, upload_url: $UPLOAD_URL"
-          curl -s -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: application/vnd.android.blob" \
-            --data-binary "@$APK" \
-            "$UPLOAD_URL?name=stall_pos.apk"
-          echo "Upload complete"
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: stall-pos-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 3
