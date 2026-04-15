@@ -18,24 +18,33 @@ jobs:
         with:
           channel: stable
           version: 3.24.5
+          android: true
 
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.pub-cache
-          key: ${{ runner.os }}-flutter-deps-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-deps-
+      - name: Check environment
+        run: |
+          echo "=== Flutter version ==="
+          flutter --version
+          echo "=== Flutter doctor verbose ==="
+          flutter doctor -v 2>&1 | head -60
+          echo "=== Android SDK ==="
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls -la $ANDROID_HOME 2>/dev/null || echo "ANDROID_HOME not found"
+          ls -la $ANDROID_SDK_ROOT 2>/dev/null || echo "ANDROID_SDK_ROOT not found"
+          ls -la $ANDROID_HOME/platforms/ 2>/dev/null || echo "No platforms"
+          ls -la $ANDROID_HOME/build-tools/ 2>/dev/null || echo "No build-tools"
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build debug APK (no pub)
+      - name: Build debug APK
         run: |
-          flutter build apk --debug --no-pub 2>&1
+          set +e
+          flutter build apk --debug 2>&1
+          EXIT=$?
+          echo "Exit code: $EXIT"
+          find build -name "*.apk" -exec ls -lh {} \;
+          exit $EXIT
         timeout-minutes: 30
 
       - name: Upload APK
