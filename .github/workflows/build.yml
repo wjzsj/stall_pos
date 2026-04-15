@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     
     steps:
       - uses: actions/checkout@v4
@@ -39,10 +40,25 @@ jobs:
 
       - name: Build debug APK
         run: |
-          flutter build apk --debug
-          ls -lh build/app/outputs/flutter-apk/
+          echo "=== BUILD START $(date) ==="
+          flutter build apk --debug 2>&1 | tee /tmp/build.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "=== BUILD EXIT: $EXIT_CODE ==="
+          echo "=== APK FILES ==="
+          find build -name "*.apk" -exec ls -lh {} \;
+          exit $EXIT_CODE
+        timeout-minutes: 30
+
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: /tmp/build.log
+          retention-days: 1
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: stall-pos-debug
