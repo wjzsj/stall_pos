@@ -32,22 +32,10 @@ jobs:
         timeout-minutes: 20
 
       - name: Build debug APK
-        run: |
-          flutter build apk --debug 2>&1 | tee /tmp/build_output.txt
+        run: flutter build apk --debug
         timeout-minutes: 30
 
-      - name: Show build result
-        run: |
-          echo "=== Build artifacts ==="
-          find build -name "*.apk" -exec ls -lh {} \;
-          echo "=== APK dir ==="
-          ls -la build/app/outputs/flutter-apk/ 2>/dev/null || echo "dir missing"
-          echo "=== Build output tail ==="
-          tail -20 /tmp/build_output.txt 2>/dev/null || echo "no output file"
-        if: always()
-
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: stall-pos-debug
