@@ -20,12 +20,21 @@ jobs:
         with:
           flutter-version: '3.24.5'
           channel: stable
-          cache: true
-          cache-key: flutter-deps-${{ hashFiles('**/pubspec.lock') }}
-          cache-path: ~/.pub-cache
+          cache: false
 
-      - name: Install dependencies
-        run: flutter pub get
+      - name: Restore pub cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: pub-cache
+          path: ~/.pub-cache/hosted/pub.dev/
+          retention-days: 2
+
+      - name: Install dependencies (offline)
+        run: |
+          mkdir -p ~/.pub-cache/hosted
+          cp -r ./pub.dev ~/.pub-cache/hosted/ || true
+          flutter pub get --offline 2>&1 || flutter pub get
+        timeout-minutes: 20
 
       - name: Build debug APK
         run: flutter build apk --debug
