@@ -30,24 +30,20 @@ jobs:
           retention-days: 2
 
       - name: Install dependencies
-        run: flutter pub get --offline 2>&1 || flutter pub get 2>&1
+        run: |
+          flutter pub get --offline 2>&1 || flutter pub get 2>&1
         timeout-minutes: 20
 
       - name: Build debug APK
         run: |
-          flutter build apk --debug > /tmp/build.log 2>&1 || true
-          echo "EXIT:$?" >> /tmp/build.log
-          cat /tmp/build.log
-
-      - name: Upload build log
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: /tmp/build.log
-          retention-days: 1
+          set -e
+          flutter build apk --debug
+          echo "=== APK FILES ==="
+          find . -name "*.apk" -type f 2>/dev/null
+          ls -lh build/app/outputs/flutter-apk/ 2>/dev/null || echo "Directory not found"
+        timeout-minutes: 30
 
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: stall-pos-debug
