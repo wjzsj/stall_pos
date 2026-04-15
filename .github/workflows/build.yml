@@ -32,13 +32,14 @@ jobs:
         timeout-minutes: 20
 
       - name: Build debug APK
-        run: |
-          flutter build apk --debug
-          find . -name "*.apk" -type f
+        run: flutter build apk --debug
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: stall-pos-debug
-          path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 3
+          files: build/app/outputs/flutter-apk/app-debug.apk
+          draft: false
+          prerelease: true
+          body: "摆摊进销存 Android Debug APK"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
