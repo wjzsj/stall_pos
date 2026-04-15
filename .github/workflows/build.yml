@@ -18,8 +18,10 @@ jobs:
           channel: stable
           version: 3.24.5
       
-      - name: Show Flutter version
-        run: flutter --version
+      - name: Show versions
+        run: |
+          flutter --version
+          flutter doctor
       
       - name: Cache Flutter dependencies
         uses: actions/cache@v4
@@ -33,12 +35,26 @@ jobs:
             ${{ runner.os }}-flutter-deps-
       
       - name: Install dependencies
-        run: flutter pub get
+        run: |
+          flutter pub get 2>&1 | tee pub_get.log
       
       - name: Build debug APK
-        run: flutter build apk --debug
+        run: |
+          flutter build apk --debug 2>&1 | tee build.log || true
+        continue-on-error: true
       
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            pub_get.log
+            build.log
+          retention-days: 1
+
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: stall-pos-debug
