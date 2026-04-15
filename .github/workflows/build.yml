@@ -16,30 +16,27 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: 3.24.5
           channel: stable
-          cache: false
-
-      - name: Restore pub cache
-        uses: actions/upload-artifact@v4
-        with:
-          name: pub-cache
-          path: ~/.pub-cache/hosted/pub.dev/
-          retention-days: 2
+          cache: true
 
       - name: Install dependencies
-        run: flutter pub get --offline 2>&1 || flutter pub get 2>&1
+        run: flutter pub get
         timeout-minutes: 20
 
       - name: Build debug APK
         run: |
+          set -e
           flutter build apk --debug
+          echo "=== APK found ==="
+          ls -la build/app/outputs/flutter-apk/
           cp build/app/outputs/flutter-apk/app-debug.apk /tmp/app-debug.apk
           ls -lh /tmp/app-debug.apk
+        timeout-minutes: 30
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: stall-pos-debug
           path: /tmp/app-debug.apk
-          retention-days: 1
+          retention-days: 3
