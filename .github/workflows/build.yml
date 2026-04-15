@@ -33,20 +33,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build debug APK
+      - name: Build debug APK (no pub)
         run: |
-          echo "=== BUILD START ==="
-          set +e
-          flutter build apk --debug 2>&1 | tee /tmp/build.log
-          EXIT=${PIPESTATUS[0]}
-          echo "=== BUILD EXIT: $EXIT ==="
-          if [ -f /tmp/build.log ]; then
-            # Print last 100 lines of log for API access
-            echo "=== BUILD LOG (last 100 lines) ==="
-            tail -100 /tmp/build.log
-            echo "=== END LOG ==="
-          fi
-          exit $EXIT
+          flutter build apk --debug --no-pub 2>&1
         timeout-minutes: 30
 
       - name: Upload APK
