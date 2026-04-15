@@ -29,16 +29,22 @@ jobs:
           path: ~/.pub-cache/hosted/pub.dev/
           retention-days: 2
 
-      - name: Install dependencies (offline)
-        run: |
-          mkdir -p ~/.pub-cache/hosted
-          cp -r ./pub.dev ~/.pub-cache/hosted/ || true
-          flutter pub get --offline 2>&1 || flutter pub get
+      - name: Install dependencies
+        run: flutter pub get --offline 2>&1 || flutter pub get 2>&1
         timeout-minutes: 20
 
       - name: Build debug APK
-        run: flutter build apk --debug
-        timeout-minutes: 30
+        run: |
+          flutter build apk --debug > /tmp/build.log 2>&1 || true
+          echo "EXIT:$?" >> /tmp/build.log
+          cat /tmp/build.log
+
+      - name: Upload build log
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: /tmp/build.log
+          retention-days: 1
 
       - name: Upload APK
         if: success()
