@@ -19,9 +19,17 @@ jobs:
           version: 3.24.5
       
       - name: Show Flutter version
-        run: flutter --version
+        run: |
+          flutter --version
+          echo "=== FLUTTER PATH ==="
+          which flutter
+          echo "=== DART PATH ==="
+          which dart
 
-      - name: Cache Flutter dependencies
+      - name: Accept Android licenses
+        run: yes | flutter doctor --android-licenses 2>&1 || true
+
+      - name: Cache Flutter dependencies  
         uses: actions/cache@v4
         with:
           path: |
@@ -35,20 +43,29 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build debug APK
+      - name: Build APK
         run: |
-          flutter build apk --debug
-          echo "=== APK Info ==="
-          ls -lh build/app/outputs/flutter-apk/
+          echo "=== Building ==="
+          flutter build apk --debug 2>&1
+          echo "=== Build done ==="
+          echo "=== Check APK ==="
+          ls -la build/app/outputs/flutter-apk/ 2>&1 || echo "APK dir not found"
+          find . -name "*.apk" 2>/dev/null
 
-      - name: Upload to Release
-        uses: softprops/action-gh-release@v1
+      - name: Upload APK file
+        run: |
+          if [ -f build/app/outputs/flutter-apk/app-debug.apk ]; then
+            ls -lh build/app/outputs/flutter-apk/app-debug.apk
+            echo "::set-output name=apk_size::$(stat -c%s build/app/outputs/flutter-apk/app-debug.apk)"
+          fi
+        id: check_apk
+
+      - name: Create Release
+        if: steps.check_apk.outputs.apk_size != ''
+        uses: ncipollo/release-action@v1
         with:
-          files: build/app/outputs/flutter-apk/app-debug.apk
-          tag_name: v1.0.0
-          release_name: 摆摊进销存 v1.0.0
-          body: 摆摊进销存利润计算器 - Debug APK
+          artifacts: "build/app/outputs/flutter-apk/app-debug.apk"
+          tag: v1.0.0
+          token: ${{ secrets.GITHUB_TOKEN }}
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
