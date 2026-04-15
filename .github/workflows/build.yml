@@ -8,39 +8,37 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
       
-      - name: Clone Flutter SDK
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
-          version: 3.24.5
-      
-      - name: Show Flutter version
-        run: flutter --version
-
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.pub-cache
-          key: ${{ runner.os }}-flutter-deps-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-deps-
+          flutter-version: '3.24.5'
+          cache: true
+          cache-key: flutter-deps-v1-${{ hashFiles('pubspec.lock') }}
+          cache-path: ~/.pub-cache
 
       - name: Install dependencies
-        run: flutter pub get
+        run: |
+          flutter config --no-analytics
+          flutter pub get
 
-      - name: Build debug APK
-        run: flutter build apk --debug
+      - name: Build APK
+        run: |
+          flutter build apk --debug --no-pub
+
+      - name: Verify APK exists
+        run: |
+          echo "=== APK Files ==="
+          find build -name "*.apk" -type f 2>/dev/null
+          ls -lh build/app/outputs/flutter-apk/ 2>/dev/null || echo "Directory not found"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: stall-pos-apk
+          name: stall-pos-debug
           path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 5
