@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,9 +17,16 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Flutter
-        uses: am0nta/actions-flutter@v2
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.5'
+          channel: stable
+
+      - name: Accept Android licenses
+        run: |
+          mkdir -p $ANDROID_HOME/licenses
+          echo -e "\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" >> $ANDROID_HOME/licenses/android-sdk-license
 
       - name: Install dependencies
         run: flutter pub get
@@ -24,17 +34,13 @@ jobs:
 
       - name: Build debug APK
         run: |
-          set +e
+          flutter doctor
           flutter build apk --debug 2>&1
-          EXIT=$?
-          echo "EXIT_CODE=$EXIT"
-          ls -la build/app/outputs/flutter-apk/ 2>/dev/null || echo "APK dir not found"
-          exit $EXIT
-        timeout-minutes: 30
+          echo "Exit: $?"
+          ls -la build/app/outputs/flutter-apk/ 2>&1 || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
-        if: success()
         with:
           name: stall-pos-debug
           path: build/app/outputs/flutter-apk/app-debug.apk
