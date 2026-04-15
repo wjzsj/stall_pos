@@ -5,13 +5,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
 jobs:
   build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    runs-on: macos-14
+    timeout-minutes: 40
 
     steps:
       - uses: actions/checkout@v4
@@ -22,48 +19,18 @@ jobs:
           flutter-version: '3.24.5'
           channel: stable
 
-      - name: Accept Android licenses
-        run: |
-          mkdir -p $ANDROID_HOME/licenses
-          printf '\n24333f8a63b6825ea9c5514f83c2829b004d1fee' > $ANDROID_HOME/licenses/android-sdk-license
-          printf '\n84831b9409646a918e30573bab4c9c91346d8abd' >> $ANDROID_HOME/licenses/android-sdk-license
-
       - name: Install dependencies
         run: flutter pub get
-        timeout-minutes: 20
+        timeout-minutes: 15
 
       - name: Build debug APK
         run: |
-          set +e
-          flutter doctor -v > /tmp/doctor.txt
-          DOCTOR_EXIT=$?
-          echo "flutter doctor exit: $DOCTOR_EXIT"
-          
-          flutter build apk --debug > /tmp/build.txt 2>&1
-          BUILD_EXIT=$?
-          echo "flutter build exit: $BUILD_EXIT"
-          
-          echo ""
-          echo "========== DOCTOR OUTPUT (last 50 lines) =========="
-          tail -50 /tmp/doctor.txt
-          echo ""
-          echo "========== BUILD OUTPUT (last 50 lines) =========="
-          tail -50 /tmp/build.txt
-          echo "========== EXIT: $BUILD_EXIT =========="
-          
-          if [ -f build/app/outputs/flutter-apk/app-debug.apk ]; then
-            echo "APK found: $(ls -lh build/app/outputs/flutter-apk/app-debug.apk)"
-          else
-            echo "APK NOT found at build/app/outputs/flutter-apk/app-debug.apk"
-          fi
-          
-          # Exit with build result (0 if APK exists, 1 otherwise)
-          if [ "$BUILD_EXIT" -eq 0 ]; then exit 0; else exit 1; fi
+          set -e
+          flutter build apk --debug
         timeout-minutes: 30
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
-        if: success()
         with:
           name: stall-pos-debug
           path: build/app/outputs/flutter-apk/app-debug.apk
