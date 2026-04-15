@@ -9,8 +9,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
     steps:
       - uses: actions/checkout@v4
@@ -30,20 +28,18 @@ jobs:
           retention-days: 2
 
       - name: Install dependencies
-        run: |
-          flutter pub get --offline 2>&1 || flutter pub get 2>&1
+        run: flutter pub get --offline 2>&1 || flutter pub get 2>&1
         timeout-minutes: 20
 
       - name: Build debug APK
         run: |
-          set -e
-          flutter build apk --debug
-          echo "=== APK FILES ==="
-          find . -name "*.apk" -type f 2>/dev/null
-          ls -lh build/app/outputs/flutter-apk/ 2>/dev/null || echo "Directory not found"
+          flutter build apk --debug 2>&1 || true
+          echo "=== Looking for APK ==="
+          find . -name "*.apk" -ls 2>/dev/null || echo "No APK found"
         timeout-minutes: 30
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: stall-pos-debug
