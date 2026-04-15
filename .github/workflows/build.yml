@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  create:
 
 jobs:
   build:
@@ -35,11 +36,18 @@ jobs:
         run: flutter build apk --debug
 
       - name: Upload to Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: build/app/outputs/flutter-apk/app-debug.apk
           draft: false
-          prerelease: true
-          body: "摆摊进销存 Android Debug APK"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload as Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stall-pos-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 3
