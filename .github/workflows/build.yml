@@ -18,10 +18,8 @@ jobs:
           channel: stable
           version: 3.24.5
       
-      - name: Verify Flutter
-        run: |
-          flutter --version
-          flutter doctor -v
+      - name: Show Flutter version
+        run: flutter --version
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v4
@@ -39,23 +37,18 @@ jobs:
 
       - name: Build debug APK
         run: |
-          echo "=== BUILD START ==="
-          date
           flutter build apk --debug
-          BUILD_EXIT=$?
-          echo "=== BUILD EXIT CODE: $BUILD_EXIT ==="
-          date
-          if [ -f build/app/outputs/flutter-apk/app-debug.apk ]; then
-            echo "APK EXISTS! Size: $(ls -lh build/app/outputs/flutter-apk/app-debug.apk | awk '{print $5}')"
-          else
-            echo "APK NOT FOUND at build/app/outputs/flutter-apk/app-debug.apk"
-            find . -name "*.apk" 2>/dev/null
-          fi
-          exit $BUILD_EXIT
+          echo "=== APK Info ==="
+          ls -lh build/app/outputs/flutter-apk/
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: stall-pos-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 5
+          files: build/app/outputs/flutter-apk/app-debug.apk
+          tag_name: v1.0.0
+          release_name: 摆摊进销存 v1.0.0
+          body: 摆摊进销存利润计算器 - Debug APK
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
