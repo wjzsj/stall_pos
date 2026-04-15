@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     
     steps:
       - name: Checkout
@@ -20,11 +20,16 @@ jobs:
           flutter-version: '3.24.5'
           android: true
           cache: true
-          cache-key: flutter-v5-${{ hashFiles('pubspec.lock') }}
+          cache-key: flutter-deps-final-${{ hashFiles('pubspec.lock') }}
           cache-path: ~/.pub-cache
 
-      - name: Install dependencies
-        run: flutter pub get
+      - name: Install dependencies (retry)
+        run: |
+          for i in 1 2 3; do
+            echo "=== Attempt $i ==="
+            flutter pub get --timeout 300 && break
+            echo "Attempt $i failed, retrying..."
+          done
 
       - name: Build APK
         run: flutter build apk --debug
