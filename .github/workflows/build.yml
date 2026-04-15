@@ -33,26 +33,23 @@ jobs:
 
       - name: Build debug APK
         run: |
-          flutter build apk --debug 2>&1
+          flutter build apk --debug 2>&1 | tee /tmp/build_output.txt
         timeout-minutes: 30
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: debug-apk-${{ github.run_number }}
-          release_name: Debug APK v${{ github.run_number }}
-          draft: true
-          prerelease: false
+      - name: Show build result
+        run: |
+          echo "=== Build artifacts ==="
+          find build -name "*.apk" -exec ls -lh {} \;
+          echo "=== APK dir ==="
+          ls -la build/app/outputs/flutter-apk/ 2>/dev/null || echo "dir missing"
+          echo "=== Build output tail ==="
+          tail -20 /tmp/build_output.txt 2>/dev/null || echo "no output file"
+        if: always()
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: build/app/outputs/flutter-apk/app-debug.apk
-          asset_name: stall_pos_debug.apk
-          asset_content_type: application/vnd.android.blob
+          name: stall-pos-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 1
