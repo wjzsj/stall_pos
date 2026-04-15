@@ -20,23 +20,15 @@ jobs:
           flutter-version: '3.24.5'
           android: true
           cache: true
-          cache-key: flutter-v6-${{ hashFiles('pubspec.lock') }}
+          cache-key: flutter-tuna-v1-${{ hashFiles('pubspec.lock') }}
           cache-path: ~/.pub-cache
 
-      - name: Install dependencies (retry loop)
+      - name: Install dependencies (TUNA mirror)
         run: |
-          for i in 1 2 3 4 5; do
-            echo "=== Attempt $i ==="
-            if flutter pub get; then
-              echo "Success!"
-              exit 0
-            fi
-            echo "Failed, retry in 30s..."
-            sleep 30
-          done
-          echo "All attempts failed"
-          exit 1
-        timeout-minutes: 25
+          export PUB_HOSTED_URL="https://pypi.tuna.tsinghua.edu.cn/mirrors/dart-pub"
+          export FLUTTER_STORAGE_BASE_URL="https://pypi.tuna.tsinghua.edu.cn/mirrors/flutter"
+          flutter config --no-analytics
+          flutter pub get
 
       - name: Build APK
         run: flutter build apk --debug
