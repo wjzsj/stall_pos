@@ -18,10 +18,8 @@ jobs:
           channel: stable
           version: 3.24.5
       
-      - name: Show Flutter/Doctor
-        run: |
-          flutter --version
-          flutter doctor -v
+      - name: Show Flutter version
+        run: flutter --version
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v4
@@ -35,28 +33,14 @@ jobs:
             ${{ runner.os }}-flutter-deps-
 
       - name: Install dependencies
-        run: |
-          flutter pub get 2>&1 | tee /tmp/pub.log
-          cat /tmp/pub.log
+        run: flutter pub get
 
-      - name: Build APK
-        run: |
-          flutter build apk --debug 2>&1 | tee /tmp/build.log
-          echo "=== EXIT CODE: $? ==="
+      - name: Build debug APK
+        run: flutter build apk --debug
 
-      - name: Debug build output
-        run: |
-          echo "=== Checking APK ==="
-          ls -la build/app/outputs/flutter-apk/ 2>&1 || echo "DIR NOT FOUND"
-          find . -name "*.apk" -ls 2>&1 || echo "NO APK FOUND"
-
-      - name: Create Release
-        uses: ncipollo/release-action@v1
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          artifacts: "build/app/outputs/flutter-apk/*.apk"
-          artifactDir: build/app/outputs/flutter-apk/
-          tag: v1.0.0-debug
-          token: ${{ secrets.GITHUB_TOKEN }}
-          draft: false
-          prerelease: false
-          allowNamedTags: true
+          name: stall-pos-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 5
