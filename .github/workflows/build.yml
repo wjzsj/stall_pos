@@ -8,33 +8,43 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
     
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
-      - name: Setup Flutter
+      - name: Clone Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
-          android: true
-          cache: true
-          cache-key: flutter-tuna-v1-${{ hashFiles('pubspec.lock') }}
-          cache-path: ~/.pub-cache
-
-      - name: Install dependencies (TUNA mirror)
+          channel: stable
+          version: 3.24.5
+      
+      - name: Show versions
         run: |
-          export PUB_HOSTED_URL="https://pypi.tuna.tsinghua.edu.cn/mirrors/dart-pub"
-          export FLUTTER_STORAGE_BASE_URL="https://pypi.tuna.tsinghua.edu.cn/mirrors/flutter"
-          flutter config --no-analytics
-          flutter pub get
+          flutter --version
+          flutter doctor
 
-      - name: Build APK
-        run: flutter build apk --debug
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.pub-cache
+          key: ${{ runner.os }}-flutter-deps-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-deps-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build debug APK
+        run: |
+          flutter build apk --debug
+          ls -lh build/app/outputs/flutter-apk/
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: stall-pos-debug
           path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 1
