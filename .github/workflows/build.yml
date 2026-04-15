@@ -8,17 +8,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: am0nta/actions-flutter@v2
         with:
-          flutter-version: 3.24.5
-          channel: stable
-          cache: true
+          flutter-version: '3.24.5'
 
       - name: Install dependencies
         run: flutter pub get
@@ -26,17 +24,18 @@ jobs:
 
       - name: Build debug APK
         run: |
-          set -e
-          flutter build apk --debug
-          echo "=== APK found ==="
-          ls -la build/app/outputs/flutter-apk/
-          cp build/app/outputs/flutter-apk/app-debug.apk /tmp/app-debug.apk
-          ls -lh /tmp/app-debug.apk
+          set +e
+          flutter build apk --debug 2>&1
+          EXIT=$?
+          echo "EXIT_CODE=$EXIT"
+          ls -la build/app/outputs/flutter-apk/ 2>/dev/null || echo "APK dir not found"
+          exit $EXIT
         timeout-minutes: 30
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: stall-pos-debug
-          path: /tmp/app-debug.apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 3
