@@ -19,11 +19,12 @@ jobs:
         with:
           flutter-version: '3.24.5'
           cache: true
-          cache-key: flutter-deps-v2-${{ hashFiles('pubspec.lock') }}
+          cache-key: flutter-deps-v3-${{ hashFiles('pubspec.lock') }}
           cache-path: ~/.pub-cache
 
       - name: Install dependencies
-        run: flutter pub get
+        run: |
+          flutter pub get --transitive-mode=only-first-party 2>&1 | head -50
         timeout-minutes: 15
 
       - name: Build APK
