@@ -1,0 +1,30 @@
+name: Upload APK to Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_id:
+        description: 'Artifact ID to upload'
+        required: true
+        default: '6451760553'
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.run_id }}
+          path: ./apk
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: apk/stall-pos-debug
+          draft: false
+          prerelease: true
+          body: "摆摊进销存 Android Debug APK - 直接安装使用"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
